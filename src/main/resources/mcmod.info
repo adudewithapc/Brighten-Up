@@ -1,0 +1,16 @@
+[
+{
+  "modid": "brightenup",
+  "name": "Brighten Up",
+  "description": "Brightens up the world of minecraft with realistic lights.",
+  "version": "0.0.1",
+  "mcversion": "1.10.2",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["That Martin Guy"],
+  "credits": "Snipe13051 for coming up with the idea",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]

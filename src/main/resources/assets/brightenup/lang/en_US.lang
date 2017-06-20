@@ -1,0 +1,5 @@
+# Blocks
+tile.brightenup:lightBulb.name=Light Bulb
+
+# Creative tab
+itemGroup.brightenUp=Brighten Up
