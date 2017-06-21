@@ -6,9 +6,10 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
-import thatmartinguy.brightenup.block.BlockLampBase;
+import net.minecraft.world.EnumSkyBlock;
+import thatmartinguy.brightenup.block.BlockLamp;
 
-public class TileEntityLampBase extends TileEntity implements ITickable, IEnergyReceiver
+public class TileEntityLamp extends TileEntity implements ITickable, IEnergyReceiver
 {
     EnergyStorage storage;
     int loss;
@@ -17,7 +18,7 @@ public class TileEntityLampBase extends TileEntity implements ITickable, IEnergy
     float mediumEnergyMultiplier;
     float highEnergyMultiplier;
 
-    public TileEntityLampBase(int capacity, int loss, float lifetime, float lowEnergyMultiplier, float mediumEnergyMultiplier, float highEnergyMultiplier)
+    public TileEntityLamp(int capacity, int loss, float lifetime, float lowEnergyMultiplier, float mediumEnergyMultiplier, float highEnergyMultiplier)
     {
         storage = new EnergyStorage(capacity);
         this.loss = loss;
@@ -30,28 +31,31 @@ public class TileEntityLampBase extends TileEntity implements ITickable, IEnergy
     @Override
     public void update()
     {
-        if(this.worldObj.getBlockState(this.pos).getBlock() instanceof BlockLampBase)
+        if(!this.worldObj.isRemote)
         {
-            EnergyLevel previousLevel = this.getEnergyLevel();
-            System.out.println(this.getEnergyPercentage());
-            storage.modifyEnergyStored(-loss);
-            if(this.getEnergyLevel() != previousLevel)
+            if (this.worldObj.getBlockState(this.pos).getBlock() instanceof BlockLamp)
             {
-                switch (this.getEnergyLevel())
+                EnergyLevel previousLevel = this.getEnergyLevel();
+                System.out.println("Current Level: " + this.getEnergyLevel() + "\nPrevious Level: " + previousLevel);
+                storage.modifyEnergyStored(-loss);
+                if (this.getEnergyLevel() != previousLevel)
                 {
-                    case LOW:
-                        this.lifetime -= 1 * lowEnergyMultiplier;
-                        break;
-                    case MEDIUM:
-                        this.lifetime -= 1 * mediumEnergyMultiplier;
-                        break;
-                    case HIGH:
-                        this.lifetime -= 1 * highEnergyMultiplier;
-                        break;
+                    switch (this.getEnergyLevel())
+                    {
+                        case LOW:
+                            this.lifetime -= 1 * lowEnergyMultiplier;
+                            break;
+                        case MEDIUM:
+                            this.lifetime -= 1 * mediumEnergyMultiplier;
+                            break;
+                        case HIGH:
+                            this.lifetime -= 1 * highEnergyMultiplier;
+                            break;
+                    }
+                    this.worldObj.checkLight(pos);
                 }
-                worldObj.notifyBlockOfStateChange(pos, worldObj.getBlockState(pos).getBlock());
+                this.markDirty();
             }
-            this.markDirty();
         }
     }
 

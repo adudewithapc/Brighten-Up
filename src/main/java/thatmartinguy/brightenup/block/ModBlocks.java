@@ -4,19 +4,18 @@ import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
-import thatmartinguy.brightenup.tileentity.TileEntityLampBase;
+import thatmartinguy.brightenup.tileentity.TileEntityLamp;
 
 @Mod.EventBusSubscriber
 public class ModBlocks
 {
-    public static BlockLampBase blockLightBulb;
+    public static BlockLamp blockLightBulb;
     public static final Block[] BLOCKS = {
-            blockLightBulb = new BlockLampBase(Material.GLASS, "lightBulb", 3, 2000, 1000, 20)
+            blockLightBulb = new BlockLamp(Material.GLASS, "lightBulb", 3, 2000, 1000, 20)
     };
 
     @SubscribeEvent
@@ -36,6 +35,6 @@ public class ModBlocks
 
     public static void registerTileEntities()
     {
-        GameRegistry.registerTileEntity(TileEntityLampBase.class, "lampBase");
+        GameRegistry.registerTileEntity(TileEntityLamp.class, "lampBase");
     }
 }
