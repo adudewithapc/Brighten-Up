@@ -55,9 +55,8 @@ public class LampEnergyMessage implements IMessage
                if(world.getBlockState(message.pos).getBlock() instanceof BlockLamp)
                {
                    BlockLamp lamp = (BlockLamp) world.getBlockState(message.pos).getBlock();
-
-                   lamp.setClientEnergyLevel(message.energyLevel);
                    world.checkLight(message.pos);
+                   System.out.println("Message sent");
                }
             });
             return null;

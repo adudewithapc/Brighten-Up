@@ -22,7 +22,6 @@ public class BlockLamp extends Block
     float lowEnergyMultiplier;
     float mediumEnergyMultiplier;
     float highEnergyMultiplier;
-    TileEntityLamp.EnergyLevel energyLevel;
 
     public BlockLamp(Material material, String name, float lightLevel, float lifetime, int capacity, int loss)
     {
@@ -69,17 +68,6 @@ public class BlockLamp extends Block
     @Override
     public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos)
     {
-        System.out.println(this.getClientEnergyLevel());
-        if(FMLCommonHandler.instance().getSide().isClient() && this.getClientEnergyLevel() != null) {
-            switch (this.getClientEnergyLevel()) {
-                case LOW:
-                    return this.getBaseLightValue();
-                case MEDIUM:
-                    return this.getBaseLightValue() * 3;
-                case HIGH:
-                    return this.getBaseLightValue() * 5;
-            }
-        }
         return 0;
     }
 
@@ -93,30 +81,4 @@ public class BlockLamp extends Block
     {
         return this.lightValue;
     }
-
-    public void setClientEnergyLevel(int energy)
-    {
-        float percentage = TileEntityLamp.getEnergyPercentage(capacity, energy);
-        if(percentage <= 0)
-        {
-            this.energyLevel = EnergyLevel.EMPTY;
-        }
-        else if(percentage <= 40)
-        {
-            this.energyLevel = EnergyLevel.LOW;
-        }
-        else if(percentage > 40 && percentage < 60)
-        {
-            this.energyLevel = EnergyLevel.MEDIUM;
-        }
-        else
-        {
-            this.energyLevel = EnergyLevel.HIGH;
-        }
-   }
-
-   public EnergyLevel getClientEnergyLevel()
-   {
-       return this.energyLevel;
-   }
 }
