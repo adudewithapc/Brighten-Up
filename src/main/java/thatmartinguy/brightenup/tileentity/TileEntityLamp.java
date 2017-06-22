@@ -11,12 +11,13 @@ import net.minecraft.util.ITickable;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import thatmartinguy.brightenup.BrightenUp;
 import thatmartinguy.brightenup.block.BlockLamp;
+import thatmartinguy.brightenup.energy.EnergyLevel;
 import thatmartinguy.brightenup.network.LampEnergyMessage;
 
 import java.lang.reflect.Field;
 import java.util.List;
 
-import static thatmartinguy.brightenup.tileentity.TileEntityLamp.EnergyLevel.EMPTY;
+import static thatmartinguy.brightenup.energy.EnergyLevel.*;
 
 public class TileEntityLamp extends TileEntity implements ITickable, IEnergyReceiver
 {
@@ -30,6 +31,8 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
 
     static final Field PLAYER_ENTRY_LIST = ReflectionHelper.findField(PlayerChunkMapEntry.class, "players", "field_187283_c");
 
+    public TileEntityLamp() {}
+
     public TileEntityLamp(int capacity, int loss, float lifetime, float lowEnergyMultiplier, float mediumEnergyMultiplier, float highEnergyMultiplier)
     {
         storage = new EnergyStorage(capacity);
@@ -39,6 +42,7 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
         this.mediumEnergyMultiplier = mediumEnergyMultiplier;
         this.highEnergyMultiplier = highEnergyMultiplier;
         this.energyLevel = EMPTY;
+        PLAYER_ENTRY_LIST.setAccessible(true);
     }
 
     @Override
@@ -48,12 +52,14 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
         {
             if (worldObj.getBlockState(this.pos).getBlock() instanceof BlockLamp)
             {
-                EnergyLevel previousLevel = this.getEnergyLevel();
+                EnergyLevel previousLevel = EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored());
                 storage.modifyEnergyStored(-loss);
-                if (this.getEnergyLevel() != previousLevel)
+                if (EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored()) != previousLevel)
                 {
-                    switch (this.getEnergyLevel())
+                    switch (getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored()))
                     {
+                        case EMPTY:
+                            break;
                         case LOW:
                             this.lifetime -= 1 * lowEnergyMultiplier;
                             break;
@@ -64,10 +70,17 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
                             this.lifetime -= 1 * highEnergyMultiplier;
                             break;
                     }
-                    List<EntityPlayerMP> playerList = (List<EntityPlayerMP>) PLAYER_ENTRY_LIST.getGenericType();
-                    for(int i = 0; i < playerList.size(); i++)
+                    try
                     {
-                        BrightenUp.network.sendTo(new LampEnergyMessage(storage.getEnergyStored(), pos), playerList.get(i));
+                        List<EntityPlayerMP> playerList = (List<EntityPlayerMP>) PLAYER_ENTRY_LIST.get(worldObj.getMinecraftServer().worldServerForDimension(worldObj.provider.getDimension()).getPlayerChunkMap().getEntry(worldObj.getChunkFromBlockCoords(pos).xPosition, worldObj.getChunkFromBlockCoords(pos).zPosition));
+                        for(int i = 0; i < playerList.size(); i++)
+                        {
+                            BrightenUp.network.sendTo(new LampEnergyMessage(EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored()).toString(), pos), playerList.get(i));
+                        }
+                    }
+                    catch (IllegalAccessException e)
+                    {
+                        e.printStackTrace();
                     }
                     worldObj.checkLight(pos);
                     worldObj.notifyBlockUpdate(pos, worldObj.getBlockState(pos), worldObj.getBlockState(pos), 3);
@@ -93,7 +106,7 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
         super.readFromNBT(compound);
         storage.readFromNBT(compound);
         lifetime = compound.getFloat("lifetime");
-        energyLevel = EnergyLevel.valueOf(compound.getString("energyLevel"));
+        energyLevel = valueOf(compound.getString("energyLevel").toUpperCase());
     }
 
     @Override
@@ -118,39 +131,5 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
     public boolean canConnectEnergy(EnumFacing from)
     {
         return from == EnumFacing.DOWN || from == EnumFacing.UP;
-    }
-
-    private float getEnergyPercentage()
-    {
-        return (storage.getEnergyStored() * 100) / storage.getMaxEnergyStored();
-    }
-
-    public EnergyLevel getEnergyLevel()
-    {
-        if(this.getEnergyPercentage() <= 0)
-        {
-            this.energyLevel = EMPTY;
-        }
-        else if(this.getEnergyPercentage() <= 40)
-        {
-            this.energyLevel = EnergyLevel.LOW;
-        }
-        else if(this.getEnergyPercentage() > 40 && this.getEnergyPercentage() < 60)
-        {
-            this.energyLevel = EnergyLevel.MEDIUM;
-        }
-        else
-        {
-            this.energyLevel = EnergyLevel.HIGH;
-        }
-        return energyLevel;
-    }
-
-    public enum EnergyLevel
-    {
-        EMPTY,
-        LOW,
-        MEDIUM,
-        HIGH
     }
 }

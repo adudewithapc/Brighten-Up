@@ -5,19 +5,22 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import thatmartinguy.brightenup.block.BlockLamp;
+import thatmartinguy.brightenup.energy.EnergyLevel;
+import thatmartinguy.brightenup.tileentity.TileEntityLamp;
 
 public class LampEnergyMessage implements IMessage
 {
-    private int energyLevel;
+    private String energyLevel;
     private BlockPos pos;
 
     public LampEnergyMessage() {};
 
-    public LampEnergyMessage(int energyLevel, BlockPos pos)
+    public LampEnergyMessage(String energyLevel, BlockPos pos)
     {
         this.energyLevel = energyLevel;
         this.pos = pos;
@@ -26,7 +29,7 @@ public class LampEnergyMessage implements IMessage
     @Override
     public void fromBytes(ByteBuf buf)
     {
-        this.energyLevel = buf.readInt();
+        energyLevel = ByteBufUtils.readUTF8String(buf);
         final int posX = buf.readInt();
         final int posY = buf.readInt();
         final int posZ = buf.readInt();
@@ -36,7 +39,7 @@ public class LampEnergyMessage implements IMessage
     @Override
     public void toBytes(ByteBuf buf)
     {
-        buf.writeInt(energyLevel);
+        ByteBufUtils.writeUTF8String(buf, energyLevel);
         buf.writeInt(pos.getX());
         buf.writeInt(pos.getY());
         buf.writeInt(pos.getZ());
@@ -54,9 +57,9 @@ public class LampEnergyMessage implements IMessage
 
                if(world.getBlockState(message.pos).getBlock() instanceof BlockLamp)
                {
-                   BlockLamp lamp = (BlockLamp) world.getBlockState(message.pos).getBlock();
+                   world.setBlockState(message.pos, world.getBlockState(message.pos).withProperty(BlockLamp.ENERGY_LEVEL, Enum.valueOf(EnergyLevel.class, message.energyLevel.toUpperCase())));
                    world.checkLight(message.pos);
-                   System.out.println("Message sent");
+                   System.out.println("Message sent as " + message.energyLevel);
                }
             });
             return null;
