@@ -7,7 +7,9 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
 import net.minecraft.world.EnumSkyBlock;
+import thatmartinguy.brightenup.BrightenUp;
 import thatmartinguy.brightenup.block.BlockLamp;
+import thatmartinguy.brightenup.network.LampEnergyMessage;
 
 public class TileEntityLamp extends TileEntity implements ITickable, IEnergyReceiver
 {
@@ -36,7 +38,6 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
             if (this.worldObj.getBlockState(this.pos).getBlock() instanceof BlockLamp)
             {
                 EnergyLevel previousLevel = this.getEnergyLevel();
-                System.out.println("Current Level: " + this.getEnergyLevel() + "\nPrevious Level: " + previousLevel);
                 storage.modifyEnergyStored(-loss);
                 if (this.getEnergyLevel() != previousLevel)
                 {
@@ -52,7 +53,9 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
                             this.lifetime -= 1 * highEnergyMultiplier;
                             break;
                     }
+                    BrightenUp.network.sendToAll(new LampEnergyMessage(storage.getEnergyStored(), pos));
                     this.worldObj.checkLight(pos);
+                    this.worldObj.notifyBlockUpdate(pos, this.worldObj.getBlockState(pos), this.worldObj.getBlockState(pos), 3);
                 }
                 this.markDirty();
             }
@@ -123,6 +126,11 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
         {
             return EnergyLevel.HIGH;
         }
+    }
+
+    public static float getEnergyPercentage(int capacity, int energy)
+    {
+        return (energy * 100) / capacity;
     }
 
     public enum EnergyLevel

@@ -1,7 +1,6 @@
 package thatmartinguy.brightenup.block;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.tileentity.TileEntity;
@@ -13,6 +12,8 @@ import thatmartinguy.brightenup.BrightenUp;
 import thatmartinguy.brightenup.tileentity.TileEntityLamp;
 import thatmartinguy.brightenup.util.Reference;
 
+import thatmartinguy.brightenup.tileentity.TileEntityLamp.EnergyLevel;
+
 public class BlockLamp extends Block
 {
     int capacity;
@@ -21,6 +22,7 @@ public class BlockLamp extends Block
     float lowEnergyMultiplier;
     float mediumEnergyMultiplier;
     float highEnergyMultiplier;
+    TileEntityLamp.EnergyLevel energyLevel;
 
     public BlockLamp(Material material, String name, float lightLevel, float lifetime, int capacity, int loss)
     {
@@ -67,21 +69,15 @@ public class BlockLamp extends Block
     @Override
     public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos)
     {
-        if (world.getTileEntity(pos) instanceof TileEntityLamp)
-        {
-            TileEntityLamp tileEntity = (TileEntityLamp) world.getTileEntity(pos);
-            TileEntityLamp.EnergyLevel energyLevel = tileEntity.getEnergyLevel();
-
-            switch (energyLevel)
-            {
+        System.out.println(this.getClientEnergyLevel());
+        if(FMLCommonHandler.instance().getSide().isClient() && this.getClientEnergyLevel() != null) {
+            switch (this.getClientEnergyLevel()) {
                 case LOW:
-                    return getBaseLightValue();
+                    return this.getBaseLightValue();
                 case MEDIUM:
-                    return getBaseLightValue() * 3;
+                    return this.getBaseLightValue() * 3;
                 case HIGH:
-                    return getBaseLightValue() * 5;
-                default:
-                    return 0;
+                    return this.getBaseLightValue() * 5;
             }
         }
         return 0;
@@ -97,4 +93,30 @@ public class BlockLamp extends Block
     {
         return this.lightValue;
     }
+
+    public void setClientEnergyLevel(int energy)
+    {
+        float percentage = TileEntityLamp.getEnergyPercentage(capacity, energy);
+        if(percentage <= 0)
+        {
+            this.energyLevel = EnergyLevel.EMPTY;
+        }
+        else if(percentage <= 40)
+        {
+            this.energyLevel = EnergyLevel.LOW;
+        }
+        else if(percentage > 40 && percentage < 60)
+        {
+            this.energyLevel = EnergyLevel.MEDIUM;
+        }
+        else
+        {
+            this.energyLevel = EnergyLevel.HIGH;
+        }
+   }
+
+   public EnergyLevel getClientEnergyLevel()
+   {
+       return this.energyLevel;
+   }
 }
