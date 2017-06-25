@@ -13,21 +13,21 @@ import thatmartinguy.brightenup.tileentity.TileEntityLamp;
 
 public class LampEnergyMessage implements IMessage
 {
-    private EnergyLevel energyLevel;
+    private int energy;
     private BlockPos pos;
 
     public LampEnergyMessage() {};
 
-    public LampEnergyMessage(EnergyLevel energyLevel, BlockPos pos)
+    public LampEnergyMessage(int energy, BlockPos pos)
     {
-        this.energyLevel = energyLevel;
+        this.energy = energy;
         this.pos = pos;
     }
 
     @Override
     public void fromBytes(ByteBuf buf)
     {
-        energyLevel = energyLevel.values()[buf.readInt()];
+        energy = buf.readInt();
         final int posX = buf.readInt();
         final int posY = buf.readInt();
         final int posZ = buf.readInt();
@@ -37,7 +37,7 @@ public class LampEnergyMessage implements IMessage
     @Override
     public void toBytes(ByteBuf buf)
     {
-        buf.writeInt(energyLevel.ordinal());
+        buf.writeInt(energy);
         buf.writeInt(pos.getX());
         buf.writeInt(pos.getY());
         buf.writeInt(pos.getZ());
@@ -56,7 +56,9 @@ public class LampEnergyMessage implements IMessage
                if(world.getTileEntity(message.pos) instanceof TileEntityLamp)
                {
                    TileEntityLamp lamp = (TileEntityLamp) world.getTileEntity(message.pos);
+                   lamp.setEnergyStored(message.energy);
                    world.checkLight(message.pos);
+                   System.out.println("Message sent as " + message.energy);
                }
             });
             return null;

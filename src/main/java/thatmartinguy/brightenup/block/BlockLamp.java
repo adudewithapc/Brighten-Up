@@ -15,17 +15,17 @@ public class BlockLamp extends Block
 {
     public final int capacity;
     public final int loss;
-    public float lifetime;
+    public final float maxLifetime;
     public final float lowEnergyMultiplier;
     public final float mediumEnergyMultiplier;
     public final float highEnergyMultiplier;
 
-    public BlockLamp(Material material, String name, float lightLevel, float lifetime, int capacity, int loss)
+    public BlockLamp(Material material, String name, float lightLevel, float maxLifetime, int capacity, int loss)
     {
-        this(material, name, lightLevel, lifetime, capacity, loss, 1, 2, 3);
+        this(material, name, lightLevel, maxLifetime, capacity, loss, 1, 2, 3);
     }
 
-    public BlockLamp(Material material, String name, float lightLevel , float lifetime, int capacity, int loss, float lowEnergyMultiplier, float mediumEnergyMultiplier, float highEnergyMultiplier)
+    public BlockLamp(Material material, String name, float lightLevel , float maxLifetime, int capacity, int loss, float lowEnergyMultiplier, float mediumEnergyMultiplier, float highEnergyMultiplier)
     {
         super(material);
         this.setUnlocalizedName(name);
@@ -35,7 +35,7 @@ public class BlockLamp extends Block
 
         this.loss = loss;
         this.capacity = capacity;
-        this.lifetime = lifetime;
+        this.maxLifetime = maxLifetime;
         this.lowEnergyMultiplier = lowEnergyMultiplier;
         this.mediumEnergyMultiplier = mediumEnergyMultiplier;
         this.highEnergyMultiplier = highEnergyMultiplier;
@@ -44,7 +44,7 @@ public class BlockLamp extends Block
     @Override
     public TileEntity createTileEntity(World world, IBlockState state)
     {
-        return new TileEntityLamp(this);
+        return new TileEntityLamp(this, maxLifetime);
     }
 
     @Override

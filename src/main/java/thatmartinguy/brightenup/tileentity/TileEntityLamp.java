@@ -21,14 +21,16 @@ import java.util.List;
 public class TileEntityLamp extends TileEntity implements ITickable, IEnergyReceiver
 {
     private EnergyStorage storage;
+    private float lifetime;
 
     private static final Field PLAYER_ENTRY_LIST = ReflectionHelper.findField(PlayerChunkMapEntry.class, "players", "field_187283_c");
 
     public TileEntityLamp() {}
 
-    public TileEntityLamp(BlockLamp lamp)
+    public TileEntityLamp(BlockLamp lamp, float maxLifetime)
     {
         storage = new EnergyStorage(lamp.capacity);
+        this.lifetime = maxLifetime;
         PLAYER_ENTRY_LIST.setAccessible(true);
     }
 
@@ -49,19 +51,19 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
                         case EMPTY:
                             break;
                         case LOW:
-                            lamp.lifetime -= 1 * lamp.lowEnergyMultiplier;
+                            lifetime -= 1 * lamp.lowEnergyMultiplier;
                             break;
                         case MEDIUM:
-                            lamp.lifetime -= 1 * lamp.mediumEnergyMultiplier;
+                            lifetime -= 1 * lamp.mediumEnergyMultiplier;
                             break;
                         case HIGH:
-                            lamp.lifetime -= 1 * lamp.highEnergyMultiplier;
+                            lifetime -= 1 * lamp.highEnergyMultiplier;
                             break;
                     }
                     try
                     {
                         List<EntityPlayerMP> playerList = (List<EntityPlayerMP>) PLAYER_ENTRY_LIST.get(((WorldServer)worldObj).getPlayerChunkMap().getEntry(worldObj.getChunkFromBlockCoords(pos).xPosition, worldObj.getChunkFromBlockCoords(pos).zPosition));
-                        LampEnergyMessage message = new LampEnergyMessage(energyLevel, pos);
+                        LampEnergyMessage message = new LampEnergyMessage(storage.getEnergyStored(), pos);
                         for(EntityPlayerMP player : playerList)
                         {
                             BrightenUp.network.sendTo(message, player);
@@ -84,8 +86,7 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
     {
         super.writeToNBT(compound);
         storage.writeToNBT(compound);
-        if(worldObj.getBlockState(pos).getBlock() instanceof BlockLamp)
-            compound.setFloat("lifetime", ((BlockLamp)worldObj.getBlockState(pos).getBlock()).lifetime);
+        compound.setFloat("lifetime", lifetime);
         return compound;
     }
 
@@ -94,8 +95,7 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
     {
         super.readFromNBT(compound);
         storage.readFromNBT(compound);
-        if(worldObj.getBlockState(pos).getBlock() instanceof BlockLamp)
-            ((BlockLamp)worldObj.getBlockState(pos).getBlock()).lifetime = compound.getFloat("lifetime");
+        lifetime = compound.getFloat("lifetime");
     }
 
     @Override
@@ -125,5 +125,10 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
     public EnergyLevel getEnergyLevel()
     {
         return EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored());
+    }
+
+    public void setEnergyStored(int energy)
+    {
+        storage.setEnergyStored(energy);
     }
 }

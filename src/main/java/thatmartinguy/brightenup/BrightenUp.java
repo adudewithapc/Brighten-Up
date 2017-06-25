@@ -41,17 +41,19 @@ public class BrightenUp
 
         int networkID = -1;
         network.registerMessage(LampEnergyMessage.Handler.class, LampEnergyMessage.class, networkID++, Side.CLIENT);
+
+        proxy.preInit();
     }
 
     @EventHandler
     public void init(FMLInitializationEvent event)
     {
-
+        proxy.init();
     }
     @EventHandler
     public void postInit(FMLPostInitializationEvent event)
     {
-
+        proxy.postInit();
     }
 
     @SidedProxy(clientSide = Reference.CLIENT_PROXY_LOCATION, serverSide = Reference.SERVER_PROXY_LOCATION, modId = Reference.MOD_ID)
