@@ -8,6 +8,7 @@ import net.minecraft.server.management.PlayerChunkMapEntry;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import thatmartinguy.brightenup.BrightenUp;
 import thatmartinguy.brightenup.block.BlockLamp;
@@ -17,31 +18,17 @@ import thatmartinguy.brightenup.network.LampEnergyMessage;
 import java.lang.reflect.Field;
 import java.util.List;
 
-import static thatmartinguy.brightenup.energy.EnergyLevel.*;
-
 public class TileEntityLamp extends TileEntity implements ITickable, IEnergyReceiver
 {
-    EnergyStorage storage;
-    int loss;
-    float lifetime;
-    float lowEnergyMultiplier;
-    float mediumEnergyMultiplier;
-    float highEnergyMultiplier;
-    EnergyLevel energyLevel;
+    private EnergyStorage storage;
 
-    static final Field PLAYER_ENTRY_LIST = ReflectionHelper.findField(PlayerChunkMapEntry.class, "players", "field_187283_c");
+    private static final Field PLAYER_ENTRY_LIST = ReflectionHelper.findField(PlayerChunkMapEntry.class, "players", "field_187283_c");
 
     public TileEntityLamp() {}
 
-    public TileEntityLamp(int capacity, int loss, float lifetime, float lowEnergyMultiplier, float mediumEnergyMultiplier, float highEnergyMultiplier)
+    public TileEntityLamp(BlockLamp lamp)
     {
-        storage = new EnergyStorage(capacity);
-        this.loss = loss;
-        this.lifetime = lifetime;
-        this.lowEnergyMultiplier = lowEnergyMultiplier;
-        this.mediumEnergyMultiplier = mediumEnergyMultiplier;
-        this.highEnergyMultiplier = highEnergyMultiplier;
-        this.energyLevel = EMPTY;
+        storage = new EnergyStorage(lamp.capacity);
         PLAYER_ENTRY_LIST.setAccessible(true);
     }
 
@@ -52,30 +39,32 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
         {
             if (worldObj.getBlockState(this.pos).getBlock() instanceof BlockLamp)
             {
-                EnergyLevel previousLevel = EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored());
-                storage.modifyEnergyStored(-loss);
-                if (EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored()) != previousLevel)
+                BlockLamp lamp = (BlockLamp) worldObj.getBlockState(pos).getBlock();
+                EnergyLevel energyLevel = EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored());
+                storage.modifyEnergyStored(-lamp.loss);
+                if (EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored()) != energyLevel)
                 {
-                    switch (getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored()))
+                    switch (EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored()))
                     {
                         case EMPTY:
                             break;
                         case LOW:
-                            this.lifetime -= 1 * lowEnergyMultiplier;
+                            lamp.lifetime -= 1 * lamp.lowEnergyMultiplier;
                             break;
                         case MEDIUM:
-                            this.lifetime -= 1 * mediumEnergyMultiplier;
+                            lamp.lifetime -= 1 * lamp.mediumEnergyMultiplier;
                             break;
                         case HIGH:
-                            this.lifetime -= 1 * highEnergyMultiplier;
+                            lamp.lifetime -= 1 * lamp.highEnergyMultiplier;
                             break;
                     }
                     try
                     {
-                        List<EntityPlayerMP> playerList = (List<EntityPlayerMP>) PLAYER_ENTRY_LIST.get(worldObj.getMinecraftServer().worldServerForDimension(worldObj.provider.getDimension()).getPlayerChunkMap().getEntry(worldObj.getChunkFromBlockCoords(pos).xPosition, worldObj.getChunkFromBlockCoords(pos).zPosition));
-                        for(int i = 0; i < playerList.size(); i++)
+                        List<EntityPlayerMP> playerList = (List<EntityPlayerMP>) PLAYER_ENTRY_LIST.get(((WorldServer)worldObj).getPlayerChunkMap().getEntry(worldObj.getChunkFromBlockCoords(pos).xPosition, worldObj.getChunkFromBlockCoords(pos).zPosition));
+                        LampEnergyMessage message = new LampEnergyMessage(energyLevel, pos);
+                        for(EntityPlayerMP player : playerList)
                         {
-                            BrightenUp.network.sendTo(new LampEnergyMessage(EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored()).toString(), pos), playerList.get(i));
+                            BrightenUp.network.sendTo(message, player);
                         }
                     }
                     catch (IllegalAccessException e)
@@ -95,8 +84,8 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
     {
         super.writeToNBT(compound);
         storage.writeToNBT(compound);
-        compound.setFloat("lifetime", lifetime);
-        compound.setString("energyLevel", energyLevel.toString());
+        if(worldObj.getBlockState(pos).getBlock() instanceof BlockLamp)
+            compound.setFloat("lifetime", ((BlockLamp)worldObj.getBlockState(pos).getBlock()).lifetime);
         return compound;
     }
 
@@ -105,8 +94,8 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
     {
         super.readFromNBT(compound);
         storage.readFromNBT(compound);
-        lifetime = compound.getFloat("lifetime");
-        energyLevel = valueOf(compound.getString("energyLevel").toUpperCase());
+        if(worldObj.getBlockState(pos).getBlock() instanceof BlockLamp)
+            ((BlockLamp)worldObj.getBlockState(pos).getBlock()).lifetime = compound.getFloat("lifetime");
     }
 
     @Override
@@ -131,5 +120,10 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
     public boolean canConnectEnergy(EnumFacing from)
     {
         return from == EnumFacing.DOWN || from == EnumFacing.UP;
+    }
+
+    public EnergyLevel getEnergyLevel()
+    {
+        return EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored());
     }
 }

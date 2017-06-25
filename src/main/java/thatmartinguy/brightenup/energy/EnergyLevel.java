@@ -2,7 +2,8 @@ package thatmartinguy.brightenup.energy;
 
 import net.minecraft.util.IStringSerializable;
 
-public enum EnergyLevel implements IStringSerializable {
+public enum EnergyLevel implements IStringSerializable
+{
     EMPTY("empty"),
     LOW("low"),
     MEDIUM("medium"),

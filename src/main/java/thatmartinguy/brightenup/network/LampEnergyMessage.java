@@ -5,22 +5,20 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import thatmartinguy.brightenup.block.BlockLamp;
 import thatmartinguy.brightenup.energy.EnergyLevel;
 import thatmartinguy.brightenup.tileentity.TileEntityLamp;
 
 public class LampEnergyMessage implements IMessage
 {
-    private String energyLevel;
+    private EnergyLevel energyLevel;
     private BlockPos pos;
 
     public LampEnergyMessage() {};
 
-    public LampEnergyMessage(String energyLevel, BlockPos pos)
+    public LampEnergyMessage(EnergyLevel energyLevel, BlockPos pos)
     {
         this.energyLevel = energyLevel;
         this.pos = pos;
@@ -29,7 +27,7 @@ public class LampEnergyMessage implements IMessage
     @Override
     public void fromBytes(ByteBuf buf)
     {
-        energyLevel = ByteBufUtils.readUTF8String(buf);
+        energyLevel = energyLevel.values()[buf.readInt()];
         final int posX = buf.readInt();
         final int posY = buf.readInt();
         final int posZ = buf.readInt();
@@ -39,7 +37,7 @@ public class LampEnergyMessage implements IMessage
     @Override
     public void toBytes(ByteBuf buf)
     {
-        ByteBufUtils.writeUTF8String(buf, energyLevel);
+        buf.writeInt(energyLevel.ordinal());
         buf.writeInt(pos.getX());
         buf.writeInt(pos.getY());
         buf.writeInt(pos.getZ());
@@ -55,11 +53,10 @@ public class LampEnergyMessage implements IMessage
                final World world = Minecraft.getMinecraft().theWorld;
                assert world != null;
 
-               if(world.getBlockState(message.pos).getBlock() instanceof BlockLamp)
+               if(world.getTileEntity(message.pos) instanceof TileEntityLamp)
                {
-                   world.setBlockState(message.pos, world.getBlockState(message.pos).withProperty(BlockLamp.ENERGY_LEVEL, Enum.valueOf(EnergyLevel.class, message.energyLevel.toUpperCase())));
+                   TileEntityLamp lamp = (TileEntityLamp) world.getTileEntity(message.pos);
                    world.checkLight(message.pos);
-                   System.out.println("Message sent as " + message.energyLevel);
                }
             });
             return null;
