@@ -18,7 +18,7 @@ public class LampEnergyMessage implements IMessage
     private int energy;
     private BlockPos pos;
 
-    public LampEnergyMessage() {};
+    public LampEnergyMessage() {}
 
     public LampEnergyMessage(int energy, BlockPos pos)
     {

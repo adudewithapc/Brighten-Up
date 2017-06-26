@@ -14,6 +14,7 @@ import thatmartinguy.brightenup.BrightenUp;
 import thatmartinguy.brightenup.block.BlockLamp;
 import thatmartinguy.brightenup.energy.EnergyLevel;
 import thatmartinguy.brightenup.network.LampEnergyMessage;
+import thatmartinguy.brightenup.util.LogHelper;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -22,29 +23,44 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
 {
     private EnergyStorage storage;
     private float lifetime;
+    private EnergyLevel lastLevel;
 
     private static final Field PLAYER_ENTRY_LIST = ReflectionHelper.findField(PlayerChunkMapEntry.class, "players", "field_187283_c");
 
-    public TileEntityLamp() {}
+    public TileEntityLamp()
+    {
+        /**if(worldObj.getBlockState(pos).getBlock() instanceof BlockLamp)
+        {
+            BlockLamp lamp = (BlockLamp) worldObj.getBlockState(pos);
+            storage = new EnergyStorage(lamp.capacity);
+            this.lifetime = lamp.maxLifetime;
+        }**/
+        storage = new EnergyStorage(Integer.MIN_VALUE);
+        PLAYER_ENTRY_LIST.setAccessible(true);
+        lastLevel = EnergyLevel.EMPTY;
+    }
 
-    public TileEntityLamp(BlockLamp lamp, float maxLifetime)
+    /**public TileEntityLamp(BlockLamp lamp, float maxLifetime)
     {
         storage = new EnergyStorage(lamp.capacity);
         this.lifetime = maxLifetime;
         PLAYER_ENTRY_LIST.setAccessible(true);
-    }
+    }**/
 
     @Override
     public void update()
     {
-        if(!worldObj.isRemote)
+        if (worldObj.getBlockState(this.pos).getBlock() instanceof BlockLamp)
         {
-            if (worldObj.getBlockState(this.pos).getBlock() instanceof BlockLamp)
+            BlockLamp lamp = (BlockLamp) worldObj.getBlockState(pos).getBlock();
+            if(lifetime == 0)
+                lifetime = lamp.maxLifetime;
+            if(storage.getMaxEnergyStored() == Integer.MIN_VALUE)
+                storage = new EnergyStorage(lamp.capacity);
+            if (!worldObj.isRemote)
             {
-                BlockLamp lamp = (BlockLamp) worldObj.getBlockState(pos).getBlock();
-                EnergyLevel energyLevel = EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored());
                 storage.modifyEnergyStored(-lamp.loss);
-                if (EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored()) != energyLevel)
+                if (EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored()) != lastLevel)
                 {
                     switch (EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored()))
                     {
@@ -62,20 +78,21 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
                     }
                     try
                     {
-                        List<EntityPlayerMP> playerList = (List<EntityPlayerMP>) PLAYER_ENTRY_LIST.get(((WorldServer)worldObj).getPlayerChunkMap().getEntry(worldObj.getChunkFromBlockCoords(pos).xPosition, worldObj.getChunkFromBlockCoords(pos).zPosition));
+                        List<EntityPlayerMP> playerList = (List<EntityPlayerMP>) PLAYER_ENTRY_LIST.get(((WorldServer) worldObj).getPlayerChunkMap().getEntry(worldObj.getChunkFromBlockCoords(pos).xPosition, worldObj.getChunkFromBlockCoords(pos).zPosition));
                         LampEnergyMessage message = new LampEnergyMessage(storage.getEnergyStored(), pos);
-                        for(EntityPlayerMP player : playerList)
+                        LogHelper.info(EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored()));
+                        for (EntityPlayerMP player : playerList)
                         {
                             BrightenUp.network.sendTo(message, player);
                         }
-                    }
-                    catch (IllegalAccessException e)
+                    } catch (IllegalAccessException e)
                     {
-                        e.printStackTrace();
+
                     }
                     worldObj.checkLight(pos);
                     worldObj.notifyBlockUpdate(pos, worldObj.getBlockState(pos), worldObj.getBlockState(pos), 3);
                     this.markDirty();
+                    lastLevel = EnergyLevel.getEnergyLevel(storage.getEnergyStored(), storage.getMaxEnergyStored());
                 }
             }
         }

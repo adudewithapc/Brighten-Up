@@ -7,10 +7,8 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import thatmartinguy.brightenup.BrightenUp;
 import thatmartinguy.brightenup.tileentity.TileEntityLamp;
-import thatmartinguy.brightenup.util.LogHelper;
 import thatmartinguy.brightenup.util.Reference;
 
 public class BlockLamp extends Block
@@ -46,7 +44,8 @@ public class BlockLamp extends Block
     @Override
     public TileEntity createTileEntity(World world, IBlockState state)
     {
-        return new TileEntityLamp(this, maxLifetime);
+       // return new TileEntityLamp(this, maxLifetime);
+        return new TileEntityLamp();
     }
 
     @Override
@@ -70,15 +69,14 @@ public class BlockLamp extends Block
         if(world.getTileEntity(pos) instanceof TileEntityLamp)
         {
             TileEntityLamp lamp = (TileEntityLamp) world.getTileEntity(pos);
-            LogHelper.info("Energy level is at " + lamp.getEnergyLevel() + " on the " + FMLCommonHandler.instance().getSide().toString() + " side.");
             switch(lamp.getEnergyLevel())
             {
                 case LOW:
-                    return getBaseLightValue();
+                    return Math.round(getBaseLightValue());
                 case MEDIUM:
-                    return getBaseLightValue() * 2;
+                    return Math.round(getBaseLightValue() * 2);
                 case HIGH:
-                    return getBaseLightValue() * 5;
+                    return Math.round(getBaseLightValue() * 5);
             }
         }
         return 0;
