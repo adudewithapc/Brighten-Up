@@ -8,8 +8,10 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import org.apache.logging.log4j.message.Message;
 import thatmartinguy.brightenup.energy.EnergyLevel;
 import thatmartinguy.brightenup.tileentity.TileEntityLamp;
+import thatmartinguy.brightenup.util.LogHelper;
 
 public class LampEnergyMessage implements IMessage
 {
@@ -58,7 +60,7 @@ public class LampEnergyMessage implements IMessage
                    TileEntityLamp lamp = (TileEntityLamp) world.getTileEntity(message.pos);
                    lamp.setEnergyStored(message.energy);
                    world.checkLight(message.pos);
-                   System.out.println("Message sent as " + message.energy);
+                   LogHelper.info("Energy sent: " + message.energy);
                }
             });
             return null;
