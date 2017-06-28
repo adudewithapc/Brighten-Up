@@ -29,24 +29,11 @@ public class TileEntityLamp extends TileEntity implements ITickable, IEnergyRece
 
     public TileEntityLamp()
     {
-        /**if(worldObj.getBlockState(pos).getBlock() instanceof BlockLamp)
-        {
-            BlockLamp lamp = (BlockLamp) worldObj.getBlockState(pos);
-            storage = new EnergyStorage(lamp.capacity);
-            this.lifetime = lamp.maxLifetime;
-        }**/
         storage = new EnergyStorage(Integer.MIN_VALUE);
         PLAYER_ENTRY_LIST.setAccessible(true);
         lastLevel = EnergyLevel.EMPTY;
     }
-
-    /**public TileEntityLamp(BlockLamp lamp, float maxLifetime)
-    {
-        storage = new EnergyStorage(lamp.capacity);
-        this.lifetime = maxLifetime;
-        PLAYER_ENTRY_LIST.setAccessible(true);
-    }**/
-
+    
     @Override
     public void update()
     {

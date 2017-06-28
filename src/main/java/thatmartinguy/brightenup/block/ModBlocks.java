@@ -15,7 +15,7 @@ public class ModBlocks
 {
     public static BlockLamp blockLightBulb;
     public static final Block[] BLOCKS = {
-            blockLightBulb = new BlockLamp(Material.GLASS, "lightBulb", 3, 2000, 1000, 20)
+            blockLightBulb = new BlockLamp(Material.GLASS, "lightBulb", 0.5F, 2000, 1000, 20)
     };
 
     @SubscribeEvent

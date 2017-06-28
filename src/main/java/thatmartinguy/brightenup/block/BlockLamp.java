@@ -13,6 +13,7 @@ import thatmartinguy.brightenup.util.Reference;
 
 public class BlockLamp extends Block
 {
+    public final float lightLevel;
     public final int capacity;
     public final int loss;
     public final float maxLifetime;
@@ -33,6 +34,7 @@ public class BlockLamp extends Block
         this.setCreativeTab(BrightenUp.tabBrightenUp);
         this.setLightLevel(lightLevel);
 
+        this.lightLevel = 15 * lightLevel;
         this.loss = loss;
         this.capacity = capacity;
         this.maxLifetime = maxLifetime;
@@ -44,7 +46,6 @@ public class BlockLamp extends Block
     @Override
     public TileEntity createTileEntity(World world, IBlockState state)
     {
-       // return new TileEntityLamp(this, maxLifetime);
         return new TileEntityLamp();
     }
 
@@ -72,11 +73,11 @@ public class BlockLamp extends Block
             switch(lamp.getEnergyLevel())
             {
                 case LOW:
-                    return Math.round(getBaseLightValue());
+                    return Math.round(getBaseLightLevel());
                 case MEDIUM:
-                    return Math.round(getBaseLightValue() * 2);
+                    return Math.round(getBaseLightLevel() * 2);
                 case HIGH:
-                    return Math.round(getBaseLightValue() * 5);
+                    return Math.round(getBaseLightLevel() * 5);
             }
         }
         return 0;
@@ -88,8 +89,8 @@ public class BlockLamp extends Block
         return super.setUnlocalizedName(Reference.MOD_ID + ":" + name);
     }
 
-    public int getBaseLightValue()
+    public float getBaseLightLevel()
     {
-        return this.lightValue;
+        return this.lightLevel;
     }
 }
